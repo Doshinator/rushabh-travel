@@ -1,4 +1,5 @@
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, web::Path, App, HttpResponse, HttpServer, Responder};
+use serde::Deserialize;
 use tracing_actix_web::TracingLogger;
 use uuid::Uuid;
 
@@ -20,8 +21,23 @@ pub async fn get_id() -> impl Responder {
         .body(format!("Id={}", Uuid::new_v4().to_string()))
 }
 
+#[derive(Deserialize)]
+pub struct User {
+    first_name: String,
+}
+
+#[get("/user/{first_name}")] // {has_to_match_member_var_in_struct}
+pub async fn get_user(user: Path<User>) -> impl Responder {
+    let u = user.into_inner();
+    HttpResponse::Ok()
+        .body(format!("first_name={}", u.first_name))
+}
 
 
+
+
+
+// replace this later inside the User struct
 pub struct FirstName(String);
 
 pub struct LastName(String);
