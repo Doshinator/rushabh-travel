@@ -58,6 +58,8 @@ pub struct User1 {
     last_name: String,
 }
 
+// http://localhost:8000/user1?first_name=John&last_name=Doe
+// need both in this case, otherwise it will 400
 #[get("/user1")]
 pub async fn get_user1_query(user: Query<User1>) -> impl Responder {
     let u = user.into_inner();
@@ -73,6 +75,9 @@ pub struct User2 {
     // you DONT have to call first_name & last_name in handler & in the http GET call.
     last_name: Option<String>,
 }
+
+// http://localhost:8000/user2?first_name=John
+// last_name is Optional 
 #[get("/user2")]
 pub async fn get_user2_query(user: Query<User2>) -> impl Responder {
     let u = user.into_inner();
@@ -96,6 +101,8 @@ pub fn get_default_last_name() -> String {
     "N/A".to_string()
 }
 
+// http://localhost:8000/user3?first_name=John
+// last_name is Optional 
 #[get("/user3")]
 pub async fn get_user3_query(user: Query<User3>) -> impl Responder {
     let u = user.into_inner();
