@@ -1,4 +1,4 @@
-use actix_web::{get, web::Path, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, web::{Path, Query}, App, HttpResponse, HttpServer, Responder};
 use serde::Deserialize;
 use tracing_actix_web::TracingLogger;
 use uuid::Uuid;
@@ -26,16 +26,13 @@ pub struct User {
     first_name: String,
 }
 
-#[get("/user/{first_name}")] // {has_to_match_member_var_in_struct}
-pub async fn get_user(user: Path<User>) -> impl Responder {
+// the Path<> param NEED all the fields in the struct inside get(/{member_var1}/{member_var2}/{etc..})
+#[get("/user/{first_name}")] 
+pub async fn get_user_path(user: Path<User>) -> impl Responder { 
     let u = user.into_inner();
     HttpResponse::Ok()
         .body(format!("first_name={}", u.first_name))
 }
-
-
-
-
 
 // replace this later inside the User struct
 pub struct FirstName(String);
@@ -50,7 +47,8 @@ pub async fn run() -> std::io::Result<()> {
             .service(hello_world)
             .service(name)
             .service(get_id)
-            .service(get_user)
+            .service(get_user_path)
+            .service(get_user_query)
     })
     .bind(("127.0.0.1", 8000))?
     .run()
