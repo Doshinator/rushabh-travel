@@ -113,9 +113,40 @@ pub async fn get_user3_query(user: Query<User3>) -> impl Responder {
 
 
 // replace this later inside the User struct
+#[derive(Deserialize)]
 pub struct FirstName(String);
 
+#[derive(Deserialize)]
 pub struct LastName(String);
+
+// 4) With Tuple struct
+#[derive(Deserialize)]
+pub struct User4 {
+    first_name: FirstName,
+    last_name: LastName,
+}
+
+#[get("/user4")]
+pub async fn get_user4_query(user: Query<User4>) -> impl Responder {
+    HttpResponse::Ok()
+}
+
+impl User4 {
+    pub fn new(first_name: String, last_name: String) -> Self {
+        Self {
+            first_name: FirstName(first_name),
+            last_name: LastName(last_name),
+        }
+    }
+
+    pub fn get_first_name(&self) -> &str {
+        &self.first_name.0
+    }
+
+    pub fn get_last_name(&self) -> &str {
+        &self.last_name.0
+    }
+}
 
 // !src/startup.rs
 pub async fn run() -> std::io::Result<()> {
