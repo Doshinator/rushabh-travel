@@ -1,6 +1,7 @@
-use actix_web::{get, web::{Path, Query}, App, HttpResponse, HttpServer, Responder};
+use actix_web::{cookie::time::format_description::parse, get, web::{Path, Query}, App, HttpResponse, HttpServer, Responder};
 use serde::Deserialize;
 use tracing_actix_web::TracingLogger;
+use unicode_segmentation::UnicodeSegmentation;
 use uuid::Uuid;
 
 #[get("/")]
@@ -113,9 +114,11 @@ pub async fn get_user3_query(user: Query<User3>) -> impl Responder {
 
 
 // replace this later inside the User struct
+#[derive(Debug)]
 #[derive(Deserialize)]
 pub struct FirstName(String);
 
+#[derive(Debug)]
 #[derive(Deserialize)]
 pub struct LastName(String);
 
@@ -128,7 +131,9 @@ pub struct User4 {
 
 #[get("/user4")]
 pub async fn get_user4_query(user: Query<User4>) -> impl Responder {
+    let u = user.into_inner();
     HttpResponse::Ok()
+        .body(format!("first_name={} & last_name={}", u.get_first_name(), u.get_last_name()))
 }
 
 impl User4 {
@@ -148,6 +153,21 @@ impl User4 {
     }
 }
 
+impl FirstName {
+    pub fn parse(first_name: String) -> Result<FirstName, String> {
+        let is_empty_or_white_space = first_name.trim().is_empty();
+        let is_too_long = first_name.graphemes(true).count() > 15;
+        let forbidden_characters = ['/', '(', ')', '"', '<', '>', '\\', '{', '}'];
+        let contains_forbidden_character = first_name.chars().any(|g| forbidden_characters.contains(&g));
+        
+        if is_empty_or_white_space || is_too_long || contains_forbidden_character {
+            Err(format!("{} is not a valid first_name", first_name))
+        } else {
+            Ok(Self(first_name))
+        }
+    }
+}
+
 // !src/startup.rs
 pub async fn run() -> std::io::Result<()> {
     HttpServer::new( move || {
@@ -159,6 +179,7 @@ pub async fn run() -> std::io::Result<()> {
             .service(get_user1_query)
             .service(get_user2_query)
             .service(get_user3_query)
+            .service(get_user4_query)
             // .service(get_user_query)
     })
     .bind(("127.0.0.1", 8000))?
