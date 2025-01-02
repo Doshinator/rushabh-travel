@@ -1,4 +1,4 @@
-use actix_web::{cookie::time::format_description::parse, get, web::{Path, Query}, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post, web::{Json, Path, Query}, App, HttpResponse, HttpServer, Responder};
 use serde::Deserialize;
 use tracing_actix_web::TracingLogger;
 use unicode_segmentation::UnicodeSegmentation;
@@ -132,8 +132,11 @@ pub struct User4 {
 #[get("/user4")]
 pub async fn get_user4_query(user: Query<User4>) -> impl Responder {
     let u = user.into_inner();
+    let first_name = FirstName(String::from(u.get_first_name()));
+    let last_name = LastName(String::from(u.get_last_name()));
+
     HttpResponse::Ok()
-        .body(format!("first_name={} & last_name={}", u.get_first_name(), u.get_last_name()))
+        .body(format!("first_name={} & last_name={}", first_name.0, last_name.0))
 }
 
 impl User4 {
@@ -168,6 +171,46 @@ impl FirstName {
     }
 }
 
+/**
+ * 
+ *  POST
+ * 
+ */
+
+#[derive(Deserialize)]
+pub struct User5 {
+    first_name: String,
+    last_name: String,
+}
+
+// curl -X POST http://localhost:8000/users -H "Content-Type: application/json" -d '{"first_name": "Alice", "last_name": "Smith"}'
+#[post("/users")]
+pub async fn create_user(user: Json<User5>) -> impl Responder {
+    let first_name = FirstName(user.first_name.clone());
+    let last_name = LastName(user.last_name.clone());
+    HttpResponse::Ok()
+        .body(format!("User create: {}, {}", first_name.0, last_name.0))
+}
+
+
+#[derive(Deserialize)]
+pub struct User6 {
+    first_name: FirstName,
+    last_name: LastName,
+}
+
+// curl -X POST http://localhost:8000/user6 -H "Content-Type: application/json" -d '{"first_name": "Alice", "last_name": "Smith"}'
+#[post("/user6")]
+pub async fn add_user(user: Json<User6>) -> impl Responder {
+    let user6 = user.into_inner(); // user.into_inner() == user.0
+    let first = user6.first_name;
+    let last = user6.last_name;
+
+    HttpResponse::Ok()
+        .body(format!("User added: {}, {}", first.0, last.0))
+}
+
+
 // !src/startup.rs
 pub async fn run() -> std::io::Result<()> {
     HttpServer::new( move || {
@@ -180,7 +223,8 @@ pub async fn run() -> std::io::Result<()> {
             .service(get_user2_query)
             .service(get_user3_query)
             .service(get_user4_query)
-            // .service(get_user_query)
+            .service(create_user)
+            .service(add_user)
     })
     .bind(("127.0.0.1", 8000))?
     .run()
