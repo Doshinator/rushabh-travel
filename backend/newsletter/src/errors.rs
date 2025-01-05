@@ -1,6 +1,6 @@
+#![allow(unused)]
 use std::{fs::File, io::ErrorKind};
 use std::io::{self, Read};
-
 // Error handling
 
 // Result<T, E> 
@@ -89,7 +89,7 @@ pub fn read_username_from_file() -> Result<String, io::Error> {
     let mut username = String::new();
 
     match username_file_handler.read_to_string(&mut username) {
-        Ok(_) => username,
+        Ok(_) => Ok(username),
         Err(e) => Err(e),
     }
 }
